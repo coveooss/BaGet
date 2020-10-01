@@ -53,6 +53,8 @@ namespace BaGet.Tests
         [Fact]
         public async Task SearchReturnsResults()
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             var results = await _client.SearchAsync();
 
             var result = Assert.Single(results);
@@ -80,6 +82,8 @@ namespace BaGet.Tests
         [Fact]
         public async Task AutocompleteReturnsResults()
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             var results = await _client.AutocompleteAsync();
 
             var result = Assert.Single(results);
@@ -96,8 +100,34 @@ namespace BaGet.Tests
         }
 
         [Fact]
+        public async Task AutocompleteVersions()
+        {
+            await _factory.AddPackageAsync(PackageData.Default);
+
+            var client = _clientFactory.CreateAutocompleteClient();
+            var results = await client.ListPackageVersionsAsync("DefaultPackage");
+
+            var result = Assert.Single(results.Data);
+
+            Assert.Equal(1, results.TotalHits);
+            Assert.Equal("1.2.3", result);
+        }
+
+        [Fact]
+        public async Task AutocompleteVersionsReturnsEmpty()
+        {
+            var client = _clientFactory.CreateAutocompleteClient();
+            var results = await client.ListPackageVersionsAsync("PackageDoesNotExist");
+
+            Assert.Empty(results.Data);
+            Assert.Equal(0, results.TotalHits);
+        }
+
+        [Fact]
         public async Task VersionListReturnsResults()
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             var versions = await _client.ListPackageVersionsAsync("DefaultPackage");
 
             var version = Assert.Single(versions);
@@ -119,6 +149,8 @@ namespace BaGet.Tests
         [InlineData("PackageDoesNotExists", "1.0.0", false)]
         public async Task PackageDownloadWorks(string packageId, string packageVersion, bool exists)
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             try
             {
                 var version = NuGetVersion.Parse(packageVersion);
@@ -144,6 +176,8 @@ namespace BaGet.Tests
         [InlineData("PackageDoesNotExists", "1.0.0", false)]
         public async Task ManifestDownloadWorks(string packageId, string packageVersion, bool exists)
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             try
             {
                 var version = NuGetVersion.Parse(packageVersion);
@@ -166,6 +200,8 @@ namespace BaGet.Tests
         [Fact]
         public async Task PackageMetadataReturnsOk()
         {
+            await _factory.AddPackageAsync(PackageData.Default);
+
             var packages = await _client.GetPackageMetadataAsync("DefaultPackage");
 
             var package = Assert.Single(packages);
