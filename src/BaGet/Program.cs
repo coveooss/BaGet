@@ -70,6 +70,7 @@ namespace BaGet
                     }
 
                     config.AddAwsSecretsManager();
+                    config.AddAwsDatabaseSecret();
                 })
                 .ConfigureWebHostDefaults(web =>
                 {

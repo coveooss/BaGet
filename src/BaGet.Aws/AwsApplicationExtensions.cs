@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
+using Amazon.SecretsManager;
+using Amazon.SecretsManager.Model;
 using BaGet.Aws;
 using BaGet.Core;
 using Microsoft.Extensions.Configuration;
@@ -84,12 +88,7 @@ namespace BaGet
             var secretsPath = partialConfig["BAGET_AWS_SECRETS_PATH"];
             if (!string.IsNullOrEmpty(secretsPath))
             {
-                var secretsRegion = partialConfig["BAGET_AWS_SECRETS_REGION"];
-                RegionEndpoint region = null;
-                if(!string.IsNullOrEmpty(secretsRegion))
-                {
-                    region = RegionEndpoint.GetBySystemName(secretsRegion);
-                }
+                var region = GetAwsRegion(partialConfig);
                 builder.AddSecretsManager(region: region, configurator: options =>
                 {
                     options.SecretFilter = entry => entry.Name.StartsWith(secretsPath);
@@ -98,8 +97,43 @@ namespace BaGet
                                                              return v; };
                 });
             }
-            
+
             return builder;
+        }
+
+        public static IConfigurationBuilder AddAwsDatabaseSecret(this IConfigurationBuilder builder)
+        {
+            IConfiguration partialConfig = builder.Build();
+            var secretsPath = partialConfig["BAGET_AWS_DATABASE_SECRET_PATH"];
+            if (!string.IsNullOrEmpty(secretsPath))
+            {
+                var region = GetAwsRegion(partialConfig);
+
+                var amazonSecretsManagerClient = new AmazonSecretsManagerClient(region);
+
+                var getSecretResponse = amazonSecretsManagerClient.GetSecretValueAsync(new GetSecretValueRequest { SecretId = secretsPath }).Result;
+
+                var secret = JsonSerializer.Deserialize<DatabaseSecret>(getSecretResponse.SecretString,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                var connectionString = $"server={secret.Host};database=library;user={secret.Username};password={secret.Password}";
+
+                builder.AddInMemoryCollection(new[] { new KeyValuePair<string, string>("Database:ConnectionString", connectionString) });
+            }
+
+            return builder;
+        }
+
+        private static RegionEndpoint GetAwsRegion(IConfiguration config)
+        {
+            var secretsRegion = config["BAGET_AWS_SECRETS_REGION"];
+            RegionEndpoint region = null;
+            if (!string.IsNullOrEmpty(secretsRegion))
+            {
+                region = RegionEndpoint.GetBySystemName(secretsRegion);
+            }
+
+            return region;
         }
 
         private static async Task<AWSCredentials> AssumeRoleAsync(
