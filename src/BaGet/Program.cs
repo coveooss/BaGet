@@ -68,6 +68,8 @@ namespace BaGet
                     {
                         config.SetBasePath(root);
                     }
+
+                    config.AddMultiUserSecretConfiguration();
                 })
                 .ConfigureWebHostDefaults(web =>
                 {
