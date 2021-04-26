@@ -68,8 +68,6 @@ namespace BaGet
                     {
                         config.SetBasePath(root);
                     }
-
-                    config.AddAwsSecretsManager();
                 })
                 .ConfigureWebHostDefaults(web =>
                 {
