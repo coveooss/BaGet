@@ -10,7 +10,7 @@ namespace BaGet.Core
         public const int DefaultMaxStringLength = 4000;
 
         public const int MaxPackageIdLength = 128;
-        public const int MaxPackageVersionLength = 64;
+        public const int MaxPackageVersionLength = 128;
         public const int MaxPackageMinClientVersionLength = 44;
         public const int MaxPackageLanguageLength = 20;
         public const int MaxPackageTitleLength = 256;
